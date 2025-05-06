@@ -8,11 +8,14 @@ use App\Models\Categoria;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use PhpParser\Node\Stmt\Label;
 
 class CategoriaResource extends Resource
 {
@@ -31,12 +34,12 @@ class CategoriaResource extends Resource
                             ->label('Nombre de la Categoria')
                             ->maxLength(255),
                         Forms\Components\Select::make('tipo')
-                        ->options([
-                            'ingreso'=> 'Ingreso',
-                            'gasto'=> 'Gasto',
-                        ])
-                        ->label('Tipo de Movimiento')
-                        ->required()
+                            ->options([
+                                'ingreso' => 'Ingreso',
+                                'gasto' => 'Gasto',
+                            ])
+                            ->label('Tipo de Movimiento')
+                            ->required()
                     ])
                     ->columns(2)
                     ->columnSpan(2)
@@ -48,10 +51,16 @@ class CategoriaResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->sortable()
+                    ->Label('No')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tipo'),
+                Tables\Columns\TextColumn::make('tipo')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -62,10 +71,30 @@ class CategoriaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('tipo')
+                    ->options([
+                        'ingreso' => 'Ingreso',
+                        'gasto' => 'Gasto',
+                    ])
+                    ->placeholder('Filtro por tipo')
+                    ->label('Tipo'),
+
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->color('success')
+                    ->icon('heroicon-o-pencil'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->color('danger')
+                    ->icon('heroicon-o-trash')
+                    ->successNotification(
+                        Notification::make()
+                            ->title('Categoria eliminada')
+                            ->body('La categoria ha sido eliminada correctamente')
+                            ->success()
+                    ),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
